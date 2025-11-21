@@ -72,10 +72,28 @@ class AwsConfigModel(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
 
+class BrokerConfigModel(BaseModel):
+    host: str
+    port: int = 5672
+    user: str
+    password: str
+    vhost: str = "/"
+    queue_name: str = "meshroom_jobs"
+    exchange_name: str = "meshroom"
+    prefetch_count: int = 1
+    model_config = ConfigDict(extra="ignore")
+
+    @property
+    def url(self) -> str:
+        """Build RabbitMQ connection URL."""
+        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
+
+
 class JsonConfigModel(BaseModel):
     logging: LoggingConfigModel
     aws: AwsConfigModel
     meshroom: MeshroomConfigModel
+    broker: BrokerConfigModel
     model_config = ConfigDict(extra="ignore")
 
 
@@ -95,6 +113,7 @@ class AppSettings(BaseModel):
     logging: LoggingConfigModel
     aws: AwsConfigModel
     meshroom: MeshroomConfigModel
+    broker: BrokerConfigModel
     secrets: SecretSettings
     model_config = ConfigDict(extra="ignore")
 
@@ -119,6 +138,7 @@ def _build_settings(
         logging=config_model.logging,
         aws=config_model.aws,
         meshroom=config_model.meshroom,
+        broker=config_model.broker,
         secrets=secrets,
     )
 

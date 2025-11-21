@@ -8,6 +8,16 @@
     "use_ssl": false,
     "bucket_name": "3d-generator"
   },
+  "broker": {
+    "host": "rabbitmq",
+    "port": 5672,
+    "user": "user",
+    "password": "pass",
+    "vhost": "/",
+    "queue_name": "meshroom_jobs",
+    "exchange_name": "meshroom",
+    "prefetch_count": 1
+  },
   "meshroom": {
     "binary": "/opt/meshroom/meshroom_photogrammetry",
     "pipeline_path": "/service/pipelines/default.mg",

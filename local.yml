@@ -1,5 +1,26 @@
 name: meshroom-local
+
 services:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"  # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: ${BROKER_USER:-user}
+      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD:-pass}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - meshroom
+
   minio:
     image: minio/minio:latest
     container_name: minio
@@ -18,18 +39,18 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    env_file:
-      - .env
     networks:
       - meshroom
 
-  app:
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: meshroom-app
+    container_name: meshroom-api
     restart: unless-stopped
     depends_on:
+      rabbitmq:
+        condition: service_healthy
       minio:
         condition: service_healthy
     env_file:
@@ -38,11 +59,35 @@ services:
       - "8000:8000"
     volumes:
       - .:/service
-      - meshroom-workspace:/var/lib/meshroom
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
       - meshroom
 
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - meshroom-workspace:/var/lib/meshroom
+    command: python -m app.worker
+    networks:
+      - meshroom
+    deploy:
+      replicas: 2
+
 volumes:
+  rabbitmq-data:
   minio-data:
   meshroom-workspace:
+
+networks:
+  meshroom:
+    driver: bridge

@@ -1,17 +1,65 @@
 name: meshroom-production
+
 services:
-  app:
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    container_name: rabbitmq
+    restart: unless-stopped
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${BROKER_USER}
+      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD}
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - meshroom
+
+  api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: meshroom-app
+    container_name: meshroom-api
     restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
     ports:
       - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --workers 4
+    networks:
+      - meshroom
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
     volumes:
       - meshroom-workspace:/var/lib/meshroom
+    command: python -m app.worker
+    networks:
+      - meshroom
+    deploy:
+      replicas: 4
 
 volumes:
+  rabbitmq-data:
   meshroom-workspace:
+
+networks:
+  meshroom:
+    driver: bridge

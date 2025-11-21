@@ -1,6 +1,17 @@
+# Web framework
 fastapi[standard]==0.121.3
 uvicorn[standard]==0.38.0
-loguru==0.7.3
+
+# Message broker
+aio-pika==9.4.3
+
+# Storage
+aiobotocore==2.12.1
 httpx==0.28.1
+
+# Logging
+loguru==0.7.3
+
+# Configuration
 pydantic==2.12.4
 pydantic-settings==2.12.0
