@@ -1,0 +1,110 @@
+__pycache__/
+*.py[cod]
+*.swp
+.DS_Store
+.git
+.gitignore
+.idea
+.vscode
+.venv
+venv/
+build/
+dist/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+*.log
+.env
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Logs
+logs/
+*.log
+log/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Documentation (not needed in container)
+docs/
+README.md
+CONTRIBUTING.md
+*.md
+!app/requirements.txt
+
+# Docker files
+Dockerfile
+docker-compose*.yml
+local.yml
+prod.yml
+.dockerignore
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+.tox/
+tests/
+test_*.py
+*_test.py
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+*.bak
+*.swp
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Data and outputs (should not be in image)
+data/
+output/
+*.zip
+*.nii
+*.nii.gz
+*.dcm
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.travis.yml
+

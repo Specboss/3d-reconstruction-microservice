@@ -1,0 +1,2 @@
+"""Meshroom processing microservice."""
+

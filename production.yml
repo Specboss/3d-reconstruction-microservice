@@ -1,0 +1,17 @@
+name: meshroom-production
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meshroom-app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - meshroom-workspace:/var/lib/meshroom
+
+volumes:
+  meshroom-workspace:

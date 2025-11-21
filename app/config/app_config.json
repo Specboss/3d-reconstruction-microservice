@@ -1,0 +1,47 @@
+{
+  "logging": {
+    "level": "DEBUG"
+  },
+  "aws": {
+    "endpoint_url": "http://minio:9000",
+    "default_region": "us-east-1",
+    "use_ssl": false,
+    "bucket_name": "ct-segmentation"
+  },
+  "meshroom": {
+    "binary": "/opt/meshroom/meshroom_photogrammetry",
+    "pipeline_path": "/service/pipelines/default.mg",
+    "workspace_dir": "/var/lib/meshroom",
+    "resources": {
+      "max_concurrent_jobs": 1,
+      "gpu_required": true,
+      "timeout_seconds": 7200
+    },
+    "defaults": {
+      "feature_extraction": {
+        "describerTypes": [
+          "sift",
+          "akaze"
+        ],
+        "describerPreset": "high",
+        "forceCpuExtraction": false
+      },
+      "depthmap": {
+        "downscale": 2,
+        "useGpu": true,
+        "minViewAngle": 2,
+        "maxViewAngle": 70
+      },
+      "meshing": {
+        "maxPoints": 6000000,
+        "maxInputPoints": 12000000
+      },
+      "texturing": {
+        "textureSide": 4096,
+        "unwrapMethod": "Basic",
+        "padding": 3
+      }
+    }
+  }
+}
+
