@@ -42,38 +42,40 @@ async def process_message(message: AbstractIncomingMessage) -> None:
         try:
             # Parse job data
             job_data = json.loads(message.body.decode("utf-8"))
-            job_id = job_data["job_id"]
-            image_urls = job_data["image_urls"]
-            callback_url = job_data["callback_url"]
-            metadata = job_data.get("metadata", {})
+            model_id = job_data["model_id"]
+            images_url = job_data["images_url"]
+            callback_url = job_data.get("callback_url")
 
             logger.info(
-                "Processing job %s with %d images",
-                job_id,
-                len(image_urls),
+                "Processing model_id=%s from %s",
+                model_id,
+                images_url,
             )
 
             # Process the reconstruction
-            status, result = await meshroom_service.process_job(job_id, image_urls)
+            status, result = await meshroom_service.process_job(model_id, images_url)
 
             # Build callback payload
-            callback_payload = {
-                "job_id": job_id,
-                "status": status,
-                "metadata": metadata,
-            }
-
             if status == "completed":
-                callback_payload["result_url"] = result
-                logger.info("Job %s completed successfully: %s", job_id, result)
+                callback_payload = {
+                    "model_id": model_id,
+                    "status": "success",
+                    "model_url": result,
+                }
+                logger.info("Model %s completed successfully: %s", model_id, result)
             else:
-                callback_payload["error"] = result
-                logger.error("Job %s failed: %s", job_id, result)
+                callback_payload = {
+                    "model_id": model_id,
+                    "status": "error",
+                    "error": result,
+                }
+                logger.error("Model %s failed: %s", model_id, result)
 
-            # Send webhook
-            await send_webhook(callback_url, callback_payload)
-
-            logger.info("Job %s finished with status: %s", job_id, status)
+            # Send webhook if callback_url provided
+            if callback_url:
+                await send_webhook(callback_url, callback_payload)
+            else:
+                logger.info("No callback_url provided. Result: %s", callback_payload)
 
         except Exception as exc:
             logger.error("Failed to process message: %s", exc, exc_info=True)

@@ -1,6 +1,5 @@
 """Reconstruction API endpoints."""
 
-import uuid
 from datetime import datetime
 from typing import Annotated
 
@@ -20,7 +19,7 @@ router = APIRouter(prefix="/reconstruct", tags=["reconstruction"])
     response_model=ReconstructResponse,
     dependencies=[Depends(verify_api_key)],
     summary="Create 3D reconstruction job",
-    description="Submit images for 3D reconstruction. Job will be queued and processed asynchronously.",
+    description="Submit ZIP archive with images for 3D reconstruction. Job will be queued and processed asynchronously.",
 )
 async def create_reconstruction_job(
     request: ReconstructRequest,
@@ -30,16 +29,13 @@ async def create_reconstruction_job(
     Create a new 3D reconstruction job.
 
     The job will be queued and processed by available workers.
-    When complete, a webhook will be sent to the provided callback_url.
+    When complete, the model will be saved to MinIO and your callback will be notified.
     """
-    job_id = uuid.uuid4().hex
-
     # Build job message
     job_message = {
-        "job_id": job_id,
-        "image_urls": [str(url) for url in request.image_urls],
-        "callback_url": str(request.callback_url),
-        "metadata": request.metadata or {},
+        "model_id": request.model_id,
+        "images_url": str(request.images_url),
+        "callback_url": str(request.callback_url) if request.callback_url else None,
         "created_at": datetime.utcnow().isoformat(),
     }
 
@@ -48,15 +44,14 @@ async def create_reconstruction_job(
     await broker.publish(job_message)
 
     logger.info(
-        "Created reconstruction job %s with %d images",
-        job_id,
-        len(request.image_urls),
+        "Created reconstruction job for model_id=%s from %s",
+        request.model_id,
+        request.images_url,
     )
 
     return ReconstructResponse(
-        job_id=job_id,
+        model_id=request.model_id,
         status="queued",
-        message=f"Job {job_id} has been queued for processing",
     )
 
 

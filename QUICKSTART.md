@@ -39,12 +39,9 @@ curl -X POST http://localhost:8000/api/v1/reconstruct \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-secret-api-key-change-in-production" \
   -d '{
-    "image_urls": [
-      "http://minio:9000/3d-generator/img1.jpg",
-      "http://minio:9000/3d-generator/img2.jpg"
-    ],
-    "callback_url": "https://webhook.site/your-unique-url",
-    "metadata": {"project_id": 123}
+    "model_id": 123,
+    "images_url": "http://minio:9000/3d-generator/photos.zip",
+    "callback_url": "https://webhook.site/your-unique-url"
   }'
 ```
 
@@ -62,25 +59,28 @@ curl -X POST http://localhost:8000/api/v1/reconstruct \
 ```python
 import httpx
 
-async def create_3d_model(image_urls: list[str], user_id: int):
+async def create_3d_model(model_id: int, images_zip_url: str):
     async with httpx.AsyncClient() as client:
         response = await client.post(
             "http://meshroom-api:8000/api/v1/reconstruct",
             json={
-                "image_urls": image_urls,
+                "model_id": model_id,
+                "images_url": images_zip_url,
                 "callback_url": "https://your-backend.com/webhook",
-                "metadata": {"user_id": user_id}
             },
             headers={"X-API-Key": "your-api-key"},
             timeout=30.0,
         )
-    return response.json()["job_id"]
+    return response.json()
 
 # Webhook handler
 @app.post("/webhook")
 async def meshroom_callback(data: dict):
-    if data["status"] == "completed":
-        await save_model(data["result_url"], data["metadata"]["user_id"])
+    model_id = data["model_id"]
+    if data["status"] == "success":
+        await save_model(model_id, data["model_url"])
+    elif data["status"] == "error":
+        await log_error(model_id, data["error"])
     return {"ok": True}
 ```
 
@@ -89,26 +89,28 @@ async def meshroom_callback(data: dict):
 ```javascript
 const axios = require('axios');
 
-async function create3DModel(imageUrls, userId) {
+async function create3DModel(modelId, imagesZipUrl) {
   const response = await axios.post(
     'http://meshroom-api:8000/api/v1/reconstruct',
     {
-      image_urls: imageUrls,
+      model_id: modelId,
+      images_url: imagesZipUrl,
       callback_url: 'https://your-backend.com/webhook',
-      metadata: { user_id: userId }
     },
     {
       headers: { 'X-API-Key': 'your-api-key' }
     }
   );
-  return response.data.job_id;
+  return response.data;
 }
 
 // Webhook handler
 app.post('/webhook', async (req, res) => {
-  const { status, result_url, metadata } = req.body;
-  if (status === 'completed') {
-    await saveModel(result_url, metadata.user_id);
+  const { model_id, status, model_url, error } = req.body;
+  if (status === 'success') {
+    await saveModel(model_id, model_url);
+  } else if (status === 'error') {
+    await logError(model_id, error);
   }
   res.json({ ok: true });
 });
