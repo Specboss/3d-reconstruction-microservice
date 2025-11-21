@@ -6,7 +6,7 @@
     "endpoint_url": "http://minio:9000",
     "default_region": "us-east-1",
     "use_ssl": false,
-    "bucket_name": "ct-segmentation"
+    "bucket_name": "3d-generator"
   },
   "meshroom": {
     "binary": "/opt/meshroom/meshroom_photogrammetry",
