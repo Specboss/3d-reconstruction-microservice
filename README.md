@@ -1,6 +1,6 @@
 # Meshroom Processing Microservice
 
-Enterprise-grade 3D reconstruction microservice using Meshroom photogrammetry with RabbitMQ message queue and MinIO object storage.
+Enterprise-grade 3D reconstruction microservice using Meshroom photogrammetry with Celery task queue, Redis broker, and MinIO object storage.
 
 ## 🏗️ Architecture
 
@@ -9,22 +9,22 @@ Enterprise-grade 3D reconstruction microservice using Meshroom photogrammetry wi
 │  Main Backend   │ (Your application)
 └────────┬────────┘
          │ HTTP POST /api/v1/reconstruct
-         │ + image_urls
+         │ + images_url
          │ + callback_url
          ▼
 ┌─────────────────┐
 │ Meshroom API    │ (REST Gateway)
 │  (FastAPI)      │
 └────────┬────────┘
-         │ Publish job
+         │ Submit Celery task
          ▼
 ┌─────────────────┐
-│   RabbitMQ      │ (Message Queue)
+│     Redis       │ (Message Broker + Result Backend)
 └────────┬────────┘
          │ Consume
          ▼
 ┌─────────────────┐
-│ Meshroom Worker │ (Processing)
+│ Celery Workers  │ (Processing)
 │   × N replicas  │
 └────────┬────────┘
          │ Upload results
@@ -37,11 +37,13 @@ Enterprise-grade 3D reconstruction microservice using Meshroom photogrammetry wi
 
 ## ✨ Features
 
-- **Scalable**: Run multiple workers independently
-- **Reliable**: RabbitMQ ensures jobs aren't lost
+- **Scalable**: Run multiple Celery workers independently
+- **Reliable**: Celery ensures jobs aren't lost with automatic retries
 - **Async**: Non-blocking REST API with webhook callbacks
 - **Secure**: API key authentication
-- **Production-ready**: Docker Compose, health checks, logging
+- **Monitoring**: Flower UI for real-time task monitoring
+- **Production-ready**: Docker Compose, health checks, structured logging
+- **Provider Architecture**: Pluggable reconstruction providers (Meshroom, Colmap, etc.)
 
 ## 🚀 Quick Start
 
@@ -49,7 +51,7 @@ Enterprise-grade 3D reconstruction microservice using Meshroom photogrammetry wi
 
 - Docker & Docker Compose
 - MinIO or S3-compatible storage
-- Images uploaded to MinIO/S3
+- Images uploaded to MinIO/S3 as ZIP archive
 
 ### 2. Setup
 
@@ -71,10 +73,6 @@ nano .env
 AWS_ACCESS_KEY_ID=minioadmin
 AWS_SECRET_ACCESS_KEY=minioadmin
 
-# RabbitMQ credentials
-BROKER_USER=user
-BROKER_PASSWORD=pass
-
 # API security (CHANGE IN PRODUCTION!)
 X_API_KEY=your-secret-api-key-change-in-production
 ```
@@ -95,8 +93,8 @@ docker compose -f production.yml up -d --build
 
 - **API**: http://localhost:8000
 - **API Docs**: http://localhost:8000/docs
-- **RabbitMQ Management**: http://localhost:15672 (user/pass)
-- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin)
+- **Flower Monitoring**: http://localhost:5555
+- **MinIO Console**: http://localhost:9001 (minioadmin/minioadmin) *(local only)*
 
 ## 📡 API Usage
 
@@ -107,24 +105,17 @@ curl -X POST http://localhost:8000/api/v1/reconstruct \
   -H "Content-Type: application/json" \
   -H "X-API-Key: your-secret-api-key-change-in-production" \
   -d '{
-    "image_urls": [
-      "http://minio:9000/3d-generator/photo1.jpg",
-      "http://minio:9000/3d-generator/photo2.jpg"
-    ],
-    "callback_url": "https://your-backend.com/api/webhooks/meshroom",
-    "metadata": {
-      "user_id": 123,
-      "project_id": 456
-    }
+    "model_id": 123,
+    "images_url": "http://minio:9000/3d-generator/photos.zip",
+    "callback_url": "https://your-backend.com/api/webhooks/meshroom"
   }'
 ```
 
 **Response:**
 ```json
 {
-  "job_id": "abc123def456",
-  "status": "queued",
-  "message": "Job abc123def456 has been queued for processing"
+  "model_id": 123,
+  "status": "queued"
 }
 ```
 
@@ -132,26 +123,29 @@ curl -X POST http://localhost:8000/api/v1/reconstruct \
 
 When job completes, your backend will receive:
 
+**Success:**
 ```json
 POST https://your-backend.com/api/webhooks/meshroom
 {
-  "job_id": "abc123def456",
-  "status": "completed",
-  "result_url": "http://minio:9000/3d-generator/results/abc123def456/texturedMesh.obj",
-  "metadata": {
-    "user_id": 123,
-    "project_id": 456
+  "model_id": 123,
+  "status": "success",
+  "model_url": "http://minio:9000/3d-generator/models/model_123/model.gltf",
+  "texture_urls": [
+    "http://minio:9000/3d-generator/models/model_123/texture_0.png"
+  ],
+  "stats": {
+    "input_images": 25,
+    "provider": "meshroom"
   }
 }
 ```
 
-**On failure:**
+**Failure:**
 ```json
 {
-  "job_id": "abc123def456",
-  "status": "failed",
-  "error": "Meshroom process failed with exit code 1",
-  "metadata": {...}
+  "model_id": 123,
+  "status": "error",
+  "error": "Not enough images for reconstruction: 2 (minimum 3 required)"
 }
 ```
 
@@ -160,37 +154,39 @@ POST https://your-backend.com/api/webhooks/meshroom
 ```python
 import httpx
 
-async def create_3d_model(user_id: int, image_urls: list[str]):
+async def create_3d_model(model_id: int, images_zip_url: str):
     """Submit 3D reconstruction job."""
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
             "http://meshroom-api:8000/api/v1/reconstruct",
             json={
-                "image_urls": image_urls,
-                "callback_url": "https://your-backend.com/api/webhooks/meshroom",
-                "metadata": {"user_id": user_id}
+                "model_id": model_id,
+                "images_url": images_zip_url,
+                "callback_url": "https://your-backend.com/api/webhooks/meshroom"
             },
             headers={"X-API-Key": "your-secret-api-key"},
             timeout=30.0,
         )
         result = response.json()
     
-    return result["job_id"]
+    return result["status"]  # "queued"
 
 # Webhook handler in your backend
 @app.post("/api/webhooks/meshroom")
 async def meshroom_callback(payload: dict):
-    job_id = payload["job_id"]
+    model_id = payload["model_id"]
     status = payload["status"]
     
-    if status == "completed":
-        result_url = payload["result_url"]
-        user_id = payload["metadata"]["user_id"]
+    if status == "success":
+        model_url = payload["model_url"]
         
         # Download and save model
-        await save_user_model(user_id, result_url)
-        await notify_user(user_id, "Your 3D model is ready!")
+        await save_model(model_id, model_url)
+        await notify_user(model_id, "Your 3D model is ready!")
+    else:
+        error = payload["error"]
+        await notify_user(model_id, f"Error: {error}")
     
     return {"status": "ok"}
 ```
@@ -200,39 +196,48 @@ async def meshroom_callback(payload: dict):
 ```
 meshroom-processing-microservice/
 ├── app/
-│   ├── main.py                    # REST API Gateway
-│   ├── worker.py                  # Job consumer
+│   ├── main.py                           # REST API Gateway (FastAPI)
+│   ├── worker.py                         # Celery worker entrypoint
+│   ├── celery_app.py                     # Celery configuration
+│   ├── tasks.py                          # Celery tasks
 │   ├── api/
-│   │   ├── dependencies.py        # FastAPI dependencies
-│   │   ├── models.py              # Request/response models
+│   │   ├── dependencies.py               # FastAPI dependencies
+│   │   ├── models.py                     # Request/response models
 │   │   └── v1/routers/
-│   │       └── reconstruct.py     # Reconstruction endpoints
+│   │       └── reconstruct.py            # Reconstruction endpoints
 │   ├── core/
-│   │   ├── broker.py              # RabbitMQ client
-│   │   ├── logger.py              # Loguru configuration
-│   │   ├── settings.py            # Configuration models
+│   │   ├── logger.py                     # Loguru configuration
+│   │   ├── settings.py                   # Configuration models
+│   │   ├── reconstruct_provider/         # Reconstruction providers
+│   │   │   ├── base/provider.py          # Base provider interface
+│   │   │   ├── meshroom.py               # Meshroom implementation
+│   │   │   └── factory.py                # Provider factory
 │   │   └── storage/
-│   │       ├── base/storage.py    # Storage interface
-│   │       └── minio.py           # MinIO implementation
+│   │       ├── base/storage.py           # Storage interface
+│   │       └── minio.py                  # MinIO implementation
 │   ├── services/
-│   │   └── meshroom_service.py    # Meshroom processing logic
+│   │   └── reconstruction_service.py     # Universal reconstruction service
 │   └── config/
-│       └── app_config.json        # Application config
+│       └── app_config.json               # Application config
 ├── pipelines/
-│   └── default.mg                 # Meshroom pipeline
-├── local.yml                      # Docker Compose (dev)
-├── production.yml                 # Docker Compose (prod)
-├── Dockerfile                     # Container image
-└── requirements.txt               # Python dependencies
+│   └── default.mg                        # Meshroom pipeline
+├── local.yml                             # Docker Compose (dev)
+├── production.yml                        # Docker Compose (prod)
+├── Dockerfile                            # Container image
+└── requirements.txt                      # Python dependencies
 ```
 
 ## 🔍 Monitoring
 
-### RabbitMQ Management UI
+### Flower UI (Celery Monitoring)
 
-1. Open http://localhost:15672
-2. Login with BROKER_USER/BROKER_PASSWORD
-3. View queue depth, message rates, workers
+1. Open http://localhost:5555
+2. View:
+   - Active tasks
+   - Task history
+   - Worker status
+   - Success/failure rates
+   - Task execution times
 
 ### Logs
 
@@ -241,7 +246,7 @@ meshroom-processing-microservice/
 docker logs meshroom-api -f
 
 # Worker logs
-docker logs meshroom-worker -f
+docker logs meshroom-local-worker-1 -f
 
 # All services
 docker compose -f local.yml logs -f
@@ -261,9 +266,10 @@ docker compose -f local.yml logs -f
     "bucket_name": "3d-generator"
   },
   "broker": {
-    "host": "rabbitmq",
-    "port": 5672,
-    "queue_name": "meshroom_jobs"
+    "host": "redis",
+    "port": 6379,
+    "redis_db": 0,
+    "result_backend_db": 1
   },
   "meshroom": {
     "binary": "/opt/meshroom/meshroom_photogrammetry",
@@ -276,6 +282,16 @@ docker compose -f local.yml logs -f
   }
 }
 ```
+
+### Celery Configuration
+
+Key Celery settings (in `celery_app.py`):
+
+- **Task timeout**: 2 hours (configurable)
+- **Automatic retry**: 3 attempts with exponential backoff
+- **Concurrency**: 1 task per worker (resource-intensive)
+- **Result expiration**: 24 hours
+- **Acknowledgement**: Late (after task completion)
 
 ## 🚀 Scaling
 
@@ -301,12 +317,50 @@ worker:
             capabilities: [gpu]
 ```
 
+## 🏗️ Provider Architecture
+
+The service supports multiple reconstruction providers through a pluggable architecture:
+
+### Current Providers
+
+- **Meshroom**: Photogrammetry pipeline (default)
+
+### Adding New Providers
+
+1. Create provider class in `app/core/reconstruct_provider/`:
+
+```python
+from app.core.reconstruct_provider.base.provider import BaseReconstructProvider
+
+class ColmapProvider(BaseReconstructProvider):
+    async def reconstruct(self, model_id: int, images_zip_url: str, **kwargs) -> dict:
+        # Implement Colmap reconstruction logic
+        pass
+```
+
+2. Register in factory (`app/core/reconstruct_provider/factory.py`):
+
+```python
+elif provider_type == "colmap":
+    return ColmapProvider(config=config, storage=storage)
+```
+
+3. Use in tasks by changing `provider_type`:
+
+```python
+reconstruction_service = ReconstructionService(
+    provider_type="colmap",  # or "meshroom"
+    config=settings.meshroom,
+    storage=storage,
+)
+```
+
 ## 🔒 Security
 
 1. **Change API Key**: Update `X_API_KEY` in `.env`
-2. **Change RabbitMQ credentials**: Update `BROKER_USER`/`BROKER_PASSWORD`
-3. **Use HTTPS**: Deploy behind reverse proxy (Nginx, Traefik)
-4. **Network isolation**: Use Docker networks in production
+2. **Use HTTPS**: Deploy behind reverse proxy (Nginx, Traefik)
+3. **Network isolation**: Use Docker networks in production
+4. **MinIO credentials**: Change default credentials in production
 
 ## 🐛 Troubleshooting
 
@@ -314,23 +368,31 @@ worker:
 
 ```bash
 # Check worker logs
-docker logs meshroom-worker-1 -f
+docker logs meshroom-local-worker-1 -f
 
-# Check RabbitMQ
-# Visit http://localhost:15672 → Queues
+# Check Flower UI
+# Visit http://localhost:5555
 ```
 
 ### Out of memory
 
-- Reduce `max_concurrent_jobs` in config
+- Reduce worker replicas (edit `docker-compose.yml`)
 - Increase worker resources
-- Scale horizontally instead
+- Reduce `max_concurrent_jobs` in config
 
 ### Meshroom timeout
 
-- Increase `timeout_seconds` in config
+- Increase `timeout_seconds` in config (default: 7200s)
 - Use fewer/smaller images
 - Check GPU availability
+
+### Task keeps retrying
+
+Celery automatically retries failed tasks 3 times with exponential backoff. Check logs for the root cause:
+
+```bash
+docker logs meshroom-local-worker-1 -f
+```
 
 ## 📝 Development
 
@@ -342,10 +404,20 @@ source venv/bin/activate  # or `venv\Scripts\activate` on Windows
 pip install -r requirements.txt
 ```
 
-### Run tests
+### Run locally without Docker
 
 ```bash
-pytest tests/
+# Terminal 1: Start Redis
+redis-server
+
+# Terminal 2: Start API
+uvicorn app.main:app --reload
+
+# Terminal 3: Start Worker
+python -m app.worker
+
+# Terminal 4: Start Flower (optional)
+celery -A app.celery_app flower
 ```
 
 ### Code quality
@@ -354,6 +426,20 @@ pytest tests/
 ruff check .
 mypy app/
 ```
+
+## 🆚 Celery vs RabbitMQ (Previous Version)
+
+This service was migrated from a custom RabbitMQ implementation to Celery. Benefits:
+
+| Feature | Custom RabbitMQ | Celery |
+|---------|----------------|--------|
+| Automatic retries | ❌ | ✅ (exponential backoff) |
+| Task monitoring UI | ❌ | ✅ (Flower) |
+| Task priorities | ❌ | ✅ |
+| Scheduled tasks | ❌ | ✅ |
+| Result backend | ❌ | ✅ (Redis) |
+| Code complexity | ~100 lines | ~50 lines |
+| Industry standard | ❌ | ✅ |
 
 ## 📄 License
 
@@ -370,4 +456,3 @@ Pull requests welcome! Please ensure:
 ---
 
 **Made with ❤️ for 3D reconstruction**
-

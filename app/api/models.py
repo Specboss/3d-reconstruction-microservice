@@ -11,6 +11,10 @@ class ReconstructRequest(BaseModel):
     images_url: AnyHttpUrl = Field(
         description="MinIO URL to ZIP archive with photos (e.g., https://minio/bucket-name/photos.zip)",
     )
+    callback_url: AnyHttpUrl | None = Field(
+        default=None,
+        description="Optional webhook URL to receive completion notification",
+    )
 
 
 class ReconstructResponse(BaseModel):

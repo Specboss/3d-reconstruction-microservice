@@ -4,10 +4,8 @@ from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
 
-from app.api.dependencies import get_broker
 from app.api.models import HealthResponse
 from app.api.v1.routers import reconstruct
-from app.core.broker import RabbitMQBroker
 from app.core.logger import configure_logging, get_logger
 from app.core.settings import AppSettings, get_settings
 
@@ -23,16 +21,11 @@ async def lifespan(app: FastAPI):
     logger.info("Starting Meshroom Processing Microservice")
     logger.info("Meshroom binary: %s", app_settings.meshroom.binary)
     logger.info("Pipeline: %s", app_settings.meshroom.pipeline_path)
-    logger.info("Broker: %s:%s", app_settings.broker.host, app_settings.broker.port)
-    
-    # Initialize broker connection
-    broker = RabbitMQBroker(app_settings.broker)
-    await broker.connect()
+    logger.info("Celery broker: %s:%s", app_settings.broker.host, app_settings.broker.port)
     
     yield
     
     # Cleanup
-    await broker.close()
     logger.info("Shutting down Meshroom Processing Microservice")
 
 

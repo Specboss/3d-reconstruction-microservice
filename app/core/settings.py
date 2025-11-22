@@ -74,19 +74,20 @@ class AwsConfigModel(BaseModel):
 
 class BrokerConfigModel(BaseModel):
     host: str
-    port: int = 5672
-    user: str
-    password: str
-    vhost: str = "/"
-    queue_name: str = "meshroom_jobs"
-    exchange_name: str = "meshroom"
-    prefetch_count: int = 1
+    port: int = 6379  # Redis default port
+    redis_db: int = 0
+    result_backend_db: int = 1
     model_config = ConfigDict(extra="ignore")
 
     @property
-    def url(self) -> str:
-        """Build RabbitMQ connection URL."""
-        return f"amqp://{self.user}:{self.password}@{self.host}:{self.port}/{self.vhost}"
+    def celery_broker_url(self) -> str:
+        """Build Celery broker URL (Redis)."""
+        return f"redis://{self.host}:{self.port}/{self.redis_db}"
+    
+    @property
+    def celery_result_backend(self) -> str:
+        """Build Celery result backend URL (Redis)."""
+        return f"redis://{self.host}:{self.port}/{self.result_backend_db}"
 
 
 class JsonConfigModel(BaseModel):

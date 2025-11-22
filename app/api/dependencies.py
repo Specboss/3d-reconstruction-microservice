@@ -2,13 +2,8 @@ from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
 
-from app.core.broker import RabbitMQBroker
 from app.core.settings import AppSettings, get_settings
 from app.core.storage.minio import MinioStorage
-
-
-def get_broker(settings: Annotated[AppSettings, Depends(get_settings)]) -> RabbitMQBroker:
-    return RabbitMQBroker(settings.broker)
 
 
 def get_storage(settings: Annotated[AppSettings, Depends(get_settings)]) -> MinioStorage:

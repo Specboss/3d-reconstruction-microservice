@@ -2,8 +2,10 @@
 fastapi[standard]==0.121.3
 uvicorn[standard]==0.38.0
 
-# Message broker
-aio-pika==9.4.3
+# Task queue
+celery[redis]==5.4.0
+redis==5.2.1
+flower==2.0.1
 
 # Storage
 aiobotocore==2.12.1

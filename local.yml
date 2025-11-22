@@ -1,22 +1,18 @@
 name: meshroom-local
 
 services:
-  rabbitmq:
-    image: rabbitmq:3.13-management
-    container_name: rabbitmq
+  redis:
+    image: redis:7-alpine
+    container_name: redis
     restart: unless-stopped
     ports:
-      - "5672:5672"
-      - "15672:15672"  # Management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: ${BROKER_USER:-user}
-      RABBITMQ_DEFAULT_PASS: ${BROKER_PASSWORD:-pass}
+      - "6379:6379"
     volumes:
-      - rabbitmq-data:/var/lib/rabbitmq
+      - redis-data:/data
     healthcheck:
-      test: rabbitmq-diagnostics -q ping
-      interval: 10s
-      timeout: 10s
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 5
     networks:
       - meshroom
@@ -49,7 +45,7 @@ services:
     container_name: meshroom-api
     restart: unless-stopped
     depends_on:
-      rabbitmq:
+      redis:
         condition: service_healthy
       minio:
         condition: service_healthy
@@ -69,13 +65,14 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      rabbitmq:
+      redis:
         condition: service_healthy
       minio:
         condition: service_healthy
     env_file:
       - .env
     volumes:
+      - .:/service
       - meshroom-workspace:/var/lib/meshroom
     command: python -m app.worker
     networks:
@@ -83,8 +80,27 @@ services:
     deploy:
       replicas: 2
 
+  flower:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: meshroom-flower
+    restart: unless-stopped
+    depends_on:
+      redis:
+        condition: service_healthy
+    env_file:
+      - .env
+    ports:
+      - "5555:5555"
+    volumes:
+      - .:/service
+    command: celery -A app.celery_app flower --port=5555
+    networks:
+      - meshroom
+
 volumes:
-  rabbitmq-data:
+  redis-data:
   minio-data:
   meshroom-workspace:
 

@@ -9,14 +9,10 @@
     "bucket_name": "3d-generator"
   },
   "broker": {
-    "host": "rabbitmq",
-    "port": 5672,
-    "user": "user",
-    "password": "pass",
-    "vhost": "/",
-    "queue_name": "meshroom_jobs",
-    "exchange_name": "meshroom",
-    "prefetch_count": 1
+    "host": "redis",
+    "port": 6379,
+    "redis_db": 0,
+    "result_backend_db": 1
   },
   "meshroom": {
     "binary": "/opt/meshroom/meshroom_photogrammetry",
