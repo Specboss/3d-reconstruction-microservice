@@ -2,14 +2,13 @@
 
 from abc import ABC, abstractmethod
 
+from app.core.reconstruct_provider.base.provider import BaseReconstructProvider
+
 
 class BaseReconstructService(ABC):
-    """Abstract base class for reconstruction services."""
+    def __init__(self, reconstruct_provider: BaseReconstructProvider):
+        self.reconstruct_provider = reconstruct_provider
 
     @abstractmethod
     async def process_job(self, job_id: str, image_urls: list[str]) -> tuple[str, str | None]:
-        """Process reconstruction job."""
         pass
-
-
-__all__ = ["BaseReconstructService"]

@@ -1,5 +1,3 @@
-"""Meshroom worker - consumes jobs from RabbitMQ and processes them."""
-
 import asyncio
 import json
 import sys
@@ -13,12 +11,9 @@ from app.core.settings import get_settings
 from app.core.storage.minio import MinioStorage
 from app.services.meshroom_service import MeshroomService
 
-# Initialize settings and logging
 settings = get_settings()
 configure_logging(settings.logging)
 logger = get_logger(__name__)
-
-# Initialize services
 broker = RabbitMQBroker(settings.broker)
 storage = MinioStorage(
     config=settings.aws,
@@ -32,15 +27,8 @@ meshroom_service = MeshroomService(
 
 
 async def process_message(message: AbstractIncomingMessage) -> None:
-    """
-    Process a job message from RabbitMQ.
-
-    Args:
-        message: Incoming message from queue
-    """
     async with message.process():
         try:
-            # Parse job data
             job_data = json.loads(message.body.decode("utf-8"))
             model_id = job_data["model_id"]
             images_url = job_data["images_url"]
@@ -51,11 +39,7 @@ async def process_message(message: AbstractIncomingMessage) -> None:
                 model_id,
                 images_url,
             )
-
-            # Process the reconstruction
             status, result = await meshroom_service.process_job(model_id, images_url)
-
-            # Build callback payload
             if status == "completed":
                 callback_payload = {
                     "model_id": model_id,
@@ -83,13 +67,6 @@ async def process_message(message: AbstractIncomingMessage) -> None:
 
 
 async def send_webhook(url: str, payload: dict) -> None:
-    """
-    Send webhook notification to callback URL.
-
-    Args:
-        url: Callback URL
-        payload: Payload to send
-    """
     try:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
@@ -111,11 +88,8 @@ async def main() -> None:
     logger.info("=" * 60)
 
     try:
-        # Connect to RabbitMQ
         await broker.connect()
         logger.info("Connected to RabbitMQ, waiting for jobs...")
-
-        # Start consuming messages
         await broker.consume(process_message)
 
         # Keep running

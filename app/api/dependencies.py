@@ -1,5 +1,3 @@
-"""FastAPI dependencies."""
-
 from typing import Annotated
 
 from fastapi import Depends, Header, HTTPException, status
@@ -10,12 +8,10 @@ from app.core.storage.minio import MinioStorage
 
 
 def get_broker(settings: Annotated[AppSettings, Depends(get_settings)]) -> RabbitMQBroker:
-    """Get RabbitMQ broker instance."""
     return RabbitMQBroker(settings.broker)
 
 
 def get_storage(settings: Annotated[AppSettings, Depends(get_settings)]) -> MinioStorage:
-    """Get MinIO storage instance."""
     return MinioStorage(
         config=settings.aws,
         access_key=settings.secrets.aws_access_key_id,
@@ -24,25 +20,11 @@ def get_storage(settings: Annotated[AppSettings, Depends(get_settings)]) -> Mini
 
 
 async def verify_api_key(
-    x_api_key: Annotated[str, Header()],
-    settings: Annotated[AppSettings, Depends(get_settings)],
+        x_api_key: Annotated[str, Header()],
+        settings: Annotated[AppSettings, Depends(get_settings)],
 ) -> None:
-    """
-    Verify API key from request header.
-
-    Args:
-        x_api_key: API key from X-API-Key header
-        settings: Application settings
-
-    Raises:
-        HTTPException: If API key is invalid
-    """
     if x_api_key != settings.secrets.x_api_key:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Invalid API key",
         )
-
-
-__all__ = ["get_broker", "get_storage", "verify_api_key"]
-

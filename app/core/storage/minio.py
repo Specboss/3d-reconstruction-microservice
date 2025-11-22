@@ -122,6 +122,3 @@ class MinioStorage(BaseStorage):
             )
 
         self.logger.info("Deleted %s from storage", remote_key)
-
-
-__all__ = ["MinioStorage"]

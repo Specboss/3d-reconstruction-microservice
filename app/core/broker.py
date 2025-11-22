@@ -74,29 +74,17 @@ class RabbitMQBroker:
         self.logger.info("Connected to RabbitMQ queue: %s", self.config.queue_name)
 
     async def publish(self, message_data: dict[str, Any]) -> None:
-        """
-        Publish message to queue.
-
-        Args:
-            message_data: Dictionary to publish as JSON
-
-        Raises:
-            RuntimeError: If not connected
-        """
         if not self._exchange:
             raise RuntimeError("Not connected to RabbitMQ. Call connect() first.")
-
         message = Message(
             body=json.dumps(message_data).encode("utf-8"),
             content_type="application/json",
             delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
         )
-
         await self._exchange.publish(
             message,
             routing_key=self.config.queue_name,
         )
-
         job_id = message_data.get("job_id", "unknown")
         self.logger.info("Published job %s to queue", job_id)
 
@@ -104,24 +92,12 @@ class RabbitMQBroker:
         self,
         callback: Callable[[AbstractIncomingMessage], Any],
     ) -> None:
-        """
-        Start consuming messages from queue.
-
-        Args:
-            callback: Async function to handle incoming messages
-        """
         if not self._queue:
             raise RuntimeError("Not connected to RabbitMQ. Call connect() first.")
-
         self.logger.info("Starting to consume messages from queue...")
         await self._queue.consume(callback)
 
     async def close(self) -> None:
-        """Close RabbitMQ connection gracefully."""
         if self._connection and not self._connection.is_closed:
             await self._connection.close()
             self.logger.info("RabbitMQ connection closed")
-
-
-__all__ = ["RabbitMQBroker"]
-
