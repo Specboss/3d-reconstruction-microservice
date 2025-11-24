@@ -330,7 +330,8 @@ The service supports multiple reconstruction providers through a pluggable archi
 1. Create provider class in `app/core/reconstruct_provider/`:
 
 ```python
-from app.core.reconstruct_provider.base.provider import BaseReconstructProvider
+from app.core.reconstruct_providers.base.provider import BaseReconstructProvider
+
 
 class ColmapProvider(BaseReconstructProvider):
     async def reconstruct(self, model_id: int, images_zip_url: str, **kwargs) -> dict:

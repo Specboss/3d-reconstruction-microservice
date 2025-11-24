@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.logger import get_logger
-from app.core.reconstruct_provider.base.provider import BaseReconstructProvider
-from app.core.reconstruct_provider.factory import ProviderFactory, ProviderType
+from app.core.reconstruct_providers.base.provider import BaseReconstructProvider
+from app.core.reconstruct_providers.factory import ProviderFactory, ProviderType
 from app.core.settings import MeshroomConfigModel
 from app.core.storage.base.storage import BaseStorage
 
@@ -14,8 +14,6 @@ logger = get_logger(__name__)
 
 
 class ReconstructionService:
-    """Universal service for 3D reconstruction using pluggable providers."""
-
     def __init__(
         self,
         provider_type: ProviderType,

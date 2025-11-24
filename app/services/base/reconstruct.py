@@ -2,7 +2,7 @@
 
 from abc import ABC, abstractmethod
 
-from app.core.reconstruct_provider.base.provider import BaseReconstructProvider
+from app.core.reconstruct_providers.base.provider import BaseReconstructProvider
 
 
 class BaseReconstructService(ABC):
