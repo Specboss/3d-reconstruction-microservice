@@ -14,38 +14,40 @@
     "redis_db": 0,
     "result_backend_db": 1
   },
-  "meshroom": {
-    "binary": "/opt/meshroom/Meshroom-2023.3.0/meshroom_batch",
-    "pipeline_path": "photogrammetry",
-    "workspace_dir": "/var/lib/meshroom",
-    "resources": {
-      "max_concurrent_jobs": 1,
-      "gpu_required": true,
-      "timeout_seconds": 7200
-    },
-    "defaults": {
-      "feature_extraction": {
-        "describerTypes": [
-          "sift",
-          "akaze"
-        ],
-        "describerPreset": "high",
-        "forceCpuExtraction": false
+  "providers": {
+    "meshroom": {
+      "binary": "/opt/meshroom/Meshroom-2023.3.0/meshroom_batch",
+      "pipeline_path": "photogrammetry",
+      "workspace_dir": "/var/lib/meshroom",
+      "resources": {
+        "max_concurrent_jobs": 1,
+        "gpu_required": true,
+        "timeout_seconds": 7200
       },
-      "depthmap": {
-        "downscale": 2,
-        "useGpu": true,
-        "minViewAngle": 2,
-        "maxViewAngle": 70
-      },
-      "meshing": {
-        "maxPoints": 6000000,
-        "maxInputPoints": 12000000
-      },
-      "texturing": {
-        "textureSide": 4096,
-        "unwrapMethod": "Basic",
-        "padding": 3
+      "defaults": {
+        "feature_extraction": {
+          "describerTypes": [
+            "sift",
+            "akaze"
+          ],
+          "describerPreset": "high",
+          "forceCpuExtraction": false
+        },
+        "depthmap": {
+          "downscale": 2,
+          "useGpu": true,
+          "minViewAngle": 2,
+          "maxViewAngle": 70
+        },
+        "meshing": {
+          "maxPoints": 6000000,
+          "maxInputPoints": 12000000
+        },
+        "texturing": {
+          "textureSide": 4096,
+          "unwrapMethod": "Basic",
+          "padding": 3
+        }
       }
     }
   }

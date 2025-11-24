@@ -1,2 +1,0 @@
-"""Reconstruction package."""
-
