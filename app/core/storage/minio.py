@@ -74,7 +74,8 @@ class MinioStorage(BaseStorage):
                 with local_path.open("wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         f.write(chunk)
-        self.logger.info(f"Downloaded {local_path.name} ({local_path.stat().st_size} bytes)")
+        self.logger.info(
+            f"Downloaded {local_path.name} ({local_path.stat().st_size} bytes)")
 
     async def get_presigned_url(self, remote_key: str, expires_in: int = 3600) -> str:
         """Generate presigned URL for MinIO object."""

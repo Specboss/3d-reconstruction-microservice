@@ -1,14 +1,9 @@
-from __future__ import annotations
-
 import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Iterator
 
-from loguru._logger import Logger
-
-from app.core.params.request_id import RequestId
-
+from app.core.logger import Logger, get_logger
 
 class TempFileManager:
     """
@@ -20,7 +15,6 @@ class TempFileManager:
         self,
         base_dir: str | Path | None = None,
         logger: Logger | None = None,
-        request_id: RequestId | None = None,
     ) -> None:
         """
         Args:
@@ -29,22 +23,16 @@ class TempFileManager:
             logger: Логгер для записи операций.
         """
         self.base_dir = Path(base_dir) if base_dir else Path(tempfile.gettempdir())
-        self.logger = logger
-        self.request_id = request_id
+        self.logger = logger or get_logger(self.__class__.__name__)
         self._created_files: list[Path] = []
         self._created_dirs: list[Path] = []
 
     def _log(self, level: str, message: str) -> None:
         if not self.logger:
             return
-        formatted = (
-            f"{self.request_id.id}: {message}"
-            if self.request_id
-            else message
-        )
         log_method = getattr(self.logger, level, None)
         if log_method:
-            log_method(formatted)
+            log_method(message)
 
     def create_dir(self, *path_parts: str) -> Path:
         """
@@ -155,7 +143,7 @@ class TempFileManager:
             if auto_cleanup:
                 self.cleanup_file(file_path)
 
-    def __enter__(self) -> TempFileManager:
+    def __enter__(self) -> "TempFileManager":
         """Поддержка context manager для автоматической очистки всех файлов."""
         return self
 
