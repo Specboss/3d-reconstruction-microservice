@@ -1,4 +1,4 @@
-name: meshroom-local
+name: 3d-reconstruction-local
 
 services:
   redis:
@@ -15,7 +15,7 @@ services:
       timeout: 3s
       retries: 5
     networks:
-      - meshroom
+      - 3d-reconstruction
 
   minio:
     image: minio/minio:latest
@@ -36,13 +36,13 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - meshroom
+      - 3d-reconstruction
 
   api:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: meshroom-api
+    container_name: 3d-reconstruction-api
     restart: unless-stopped
     depends_on:
       redis:
@@ -57,7 +57,7 @@ services:
       - .:/service
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     networks:
-      - meshroom
+      - 3d-reconstruction
 
   worker:
     build:
@@ -73,10 +73,10 @@ services:
       - .env
     volumes:
       - .:/service
-      - meshroom-workspace:/var/lib/meshroom
+      - 3d-reconstruction-workspace:/var/lib/3d-reconstruction
     command: python -m app.worker
     networks:
-      - meshroom
+      - 3d-reconstruction
     deploy:
       replicas: 1
 
@@ -84,7 +84,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: meshroom-flower
+    container_name: 3d-reconstruction-flower
     restart: unless-stopped
     depends_on:
       redis:
@@ -97,13 +97,13 @@ services:
       - .:/service
     command: celery -A app.celery_app flower --port=5555
     networks:
-      - meshroom
+      - 3d-reconstruction
 
 volumes:
   redis-data:
   minio-data:
-  meshroom-workspace:
+  3d-reconstruction-workspace:
 
 networks:
-  meshroom:
+  3d-reconstruction:
     driver: bridge

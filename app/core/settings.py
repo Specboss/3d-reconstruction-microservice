@@ -90,10 +90,16 @@ class BrokerConfigModel(BaseModel):
         return f"redis://{self.host}:{self.port}/{self.result_backend_db}"
 
 
+class ProvidersConfigModel(BaseModel):
+    """Configuration for all reconstruction providers."""
+    meshroom: MeshroomConfigModel
+    model_config = ConfigDict(extra="ignore")
+
+
 class JsonConfigModel(BaseModel):
     logging: LoggingConfigModel
     aws: AwsConfigModel
-    meshroom: MeshroomConfigModel
+    providers: ProvidersConfigModel
     broker: BrokerConfigModel
     model_config = ConfigDict(extra="ignore")
 
@@ -113,10 +119,15 @@ class SecretSettings(BaseSettings):
 class AppSettings(BaseModel):
     logging: LoggingConfigModel
     aws: AwsConfigModel
-    meshroom: MeshroomConfigModel
+    providers: ProvidersConfigModel
     broker: BrokerConfigModel
     secrets: SecretSettings
     model_config = ConfigDict(extra="ignore")
+    
+    @property
+    def meshroom(self) -> MeshroomConfigModel:
+        """Convenience property for backward compatibility."""
+        return self.providers.meshroom
 
 
 def _resolve_config_path() -> Path:
@@ -138,7 +149,7 @@ def _build_settings(
     return AppSettings(
         logging=config_model.logging,
         aws=config_model.aws,
-        meshroom=config_model.meshroom,
+        providers=config_model.providers,
         broker=config_model.broker,
         secrets=secrets,
     )

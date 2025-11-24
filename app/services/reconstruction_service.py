@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Any
 
 from app.core.logger import get_logger
-from app.core.reconstruct_providers.base.provider import BaseReconstructProvider
+from app.core.reconstruction.base import BaseReconstructProvider
 from app.core.reconstruct_providers.factory import ProviderFactory, ProviderType
 from app.core.settings import MeshroomConfigModel
 from app.core.storage.base.storage import BaseStorage
