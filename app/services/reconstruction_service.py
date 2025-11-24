@@ -98,6 +98,3 @@ class ReconstructionService:
             )
             raise
 
-
-__all__ = ["ReconstructionService"]
-

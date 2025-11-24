@@ -14,8 +14,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 RUN mkdir -p /opt/meshroom && \
-    curl -L "${MESHROOM_TGZ_URL}" | tar -xz --strip-components=1 -C /opt/meshroom && \
-    chmod +x /opt/meshroom/meshroom_photogrammetry
+    curl -L "${MESHROOM_TGZ_URL}" | tar -xz -C /opt/meshroom && \
+    find /opt/meshroom -name "meshroom_photogrammetry" -exec chmod +x {} \; || true
 
 RUN mkdir -p "${MESHROOM_WORKSPACE}"
 

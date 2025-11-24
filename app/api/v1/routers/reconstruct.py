@@ -30,7 +30,6 @@ async def create_reconstruction_job(
         kwargs={
             "model_id": request.model_id,
             "images_zip_url": str(request.images_url),
-            "callback_url": str(request.callback_url) if request.callback_url else None,
         },
         task_id=f"model_{request.model_id}",
     )

@@ -45,26 +45,10 @@ class BaseStorage(ABC):
 
     @abstractmethod
     async def get_presigned_url(self, remote_key: str, expires_in: int = 3600) -> str:
-        """
-        Generate presigned URL for object.
-
-        Args:
-            remote_key: Remote object key/path
-            expires_in: URL expiration time in seconds
-
-        Returns:
-            Presigned URL
-        """
         ...
 
     @abstractmethod
     async def delete_file(self, remote_key: str) -> None:
-        """
-        Delete file from storage.
-
-        Args:
-            remote_key: Remote object key/path
-        """
         ...
 
 

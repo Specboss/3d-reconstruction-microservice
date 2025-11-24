@@ -73,21 +73,21 @@ class MeshroomProvider(BaseReconstructProvider):
                 directory.mkdir(parents=True, exist_ok=True)
 
             # Download and extract images
-            self.logger.info("Model %s: Downloading ZIP from %s", model_id, images_zip_url)
+            self.logger.info(f"Model {model_id}: Downloading ZIP from {images_zip_url}")
             await self.storage.download_url(images_zip_url, zip_path)
 
-            self.logger.info("Model %s: Extracting images", model_id)
+            self.logger.info(f"Model {model_id}: Extracting images")
             image_count = await self._extract_zip(zip_path, images_dir)
 
             # Run Meshroom reconstruction
-            self.logger.info("Model %s: Starting Meshroom processing (%d images)", model_id, image_count)
+            self.logger.info(f"Model {model_id}: Starting Meshroom processing ({image_count} images)")
             await self._run_meshroom(model_id, images_dir, cache_dir, output_dir)
 
             # Upload results
-            self.logger.info("Model %s: Uploading results", model_id)
+            self.logger.info(f"Model {model_id}: Uploading results")
             result = await self._upload_results(model_id, output_dir)
 
-            self.logger.info("Model %s: Reconstruction completed successfully", model_id)
+            self.logger.info(f"Model {model_id}: Reconstruction completed successfully")
             return {
                 "model_url": result["model_url"],
                 "texture_urls": result["texture_urls"],
@@ -158,7 +158,7 @@ class MeshroomProvider(BaseReconstructProvider):
             str(output_dir),
         ]
 
-        self.logger.info("Model %s: Running command: %s", model_id, shlex.join(command))
+        self.logger.info(f"Model {model_id}: Running command: {shlex.join(command)}")
 
         process = await asyncio.create_subprocess_exec(
             *command,
@@ -178,15 +178,21 @@ class MeshroomProvider(BaseReconstructProvider):
                 f"Meshroom processing timed out after {self.config.resources.timeout_seconds}s"
             ) from exc
 
-        if stdout:
-            self.logger.debug("Model %s stdout: %s", model_id, stdout.decode())
-        if stderr:
-            self.logger.warning("Model %s stderr: %s", model_id, stderr.decode())
+        stdout_text = stdout.decode() if stdout else ""
+        stderr_text = stderr.decode() if stderr else ""
+        
+        if stdout_text:
+            self.logger.debug(f"Model {model_id} stdout: {stdout_text}")
+        if stderr_text:
+            self.logger.warning(f"Model {model_id} stderr: {stderr_text}")
 
         if process.returncode != 0:
-            raise RuntimeError(
-                f"Meshroom process failed with exit code {process.returncode}"
-            )
+            error_msg = f"Meshroom process failed with exit code {process.returncode}"
+            if stderr_text:
+                error_msg += f"\nStderr: {stderr_text}"
+            if stdout_text:
+                error_msg += f"\nStdout: {stdout_text}"
+            raise RuntimeError(error_msg)
 
     async def _upload_results(self, model_id: int, output_dir: Path) -> dict[str, Any]:
         """
@@ -251,7 +257,7 @@ class MeshroomProvider(BaseReconstructProvider):
             import shutil
 
             shutil.rmtree(job_dir, ignore_errors=True)
-            self.logger.info("Cleaned up workspace: %s", job_dir)
+            self.logger.info(f"Cleaned up workspace: {job_dir}")
 
 
 __all__ = ["MeshroomProvider"]

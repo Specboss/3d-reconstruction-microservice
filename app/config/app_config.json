@@ -15,8 +15,8 @@
     "result_backend_db": 1
   },
   "meshroom": {
-    "binary": "/opt/meshroom/meshroom_photogrammetry",
-    "pipeline_path": "/service/pipelines/default.mg",
+    "binary": "/opt/meshroom/Meshroom-2023.3.0/meshroom_batch",
+    "pipeline_path": "photogrammetry",
     "workspace_dir": "/var/lib/meshroom",
     "resources": {
       "max_concurrent_jobs": 1,
