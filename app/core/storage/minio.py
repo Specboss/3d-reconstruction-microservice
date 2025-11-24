@@ -16,11 +16,6 @@ class MinioStorage(BaseStorage):
     def __init__(self, config: AwsConfigModel, access_key: str, secret_key: str) -> None:
         """
         Initialize MinIO storage.
-
-        Args:
-            config: AWS/MinIO configuration
-            access_key: Access key ID
-            secret_key: Secret access key
         """
         self.config = config
         self.access_key = access_key
@@ -46,7 +41,7 @@ class MinioStorage(BaseStorage):
                 )
 
         url = f"{self.config.endpoint_url}/{self.config.bucket_name}/{remote_key}"
-        self.logger.info("Uploaded %s to %s", local_path, url)
+        self.logger.info(f"Uploaded {local_path} to {url}")
         return url
 
     async def download_file(self, remote_key: str, local_path: Path) -> None:
@@ -68,23 +63,18 @@ class MinioStorage(BaseStorage):
                 data = await stream.read()
                 local_path.parent.mkdir(parents=True, exist_ok=True)
                 local_path.write_bytes(data)
-
-        self.logger.info("Downloaded %s to %s", remote_key, local_path)
+        self.logger.info(f"Downloaded {remote_key} to {local_path}")
 
     async def download_url(self, url: str, local_path: Path) -> None:
-        """Download file from HTTP(S) URL."""
-        self.logger.info("Downloading %s to %s", url, local_path)
-        
+        self.logger.info(f"Downloading {url} to {local_path}")
         local_path.parent.mkdir(parents=True, exist_ok=True)
-        
         async with httpx.AsyncClient(follow_redirects=True, timeout=120.0) as client:
             async with client.stream("GET", url) as response:
                 response.raise_for_status()
                 with local_path.open("wb") as f:
                     async for chunk in response.aiter_bytes(chunk_size=8192):
                         f.write(chunk)
-
-        self.logger.info("Downloaded %s (%d bytes)", local_path.name, local_path.stat().st_size)
+        self.logger.info(f"Downloaded {local_path.name} ({local_path.stat().st_size} bytes)")
 
     async def get_presigned_url(self, remote_key: str, expires_in: int = 3600) -> str:
         """Generate presigned URL for MinIO object."""
@@ -121,4 +111,4 @@ class MinioStorage(BaseStorage):
                 Key=remote_key,
             )
 
-        self.logger.info("Deleted %s from storage", remote_key)
+        self.logger.info(f"Deleted {remote_key} from storage")

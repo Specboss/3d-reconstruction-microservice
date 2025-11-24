@@ -19,11 +19,10 @@ logger = get_logger(__name__)
 
 class ReconstructionTask(Task):
     """Base task with retry configuration for reconstruction jobs."""
-
     autoretry_for = (Exception,)
     retry_kwargs = {"max_retries": 3}
     retry_backoff = True
-    retry_backoff_max = 600  # Max 10 minutes
+    retry_backoff_max = 600
     retry_jitter = True
 
 
@@ -40,18 +39,6 @@ def process_reconstruction(
 ) -> dict[str, Any]:
     """
     Process 3D reconstruction job.
-
-    Args:
-        self: Celery task instance
-        model_id: Unique model identifier
-        images_zip_url: URL to ZIP archive with input images
-        callback_url: Optional webhook URL for completion notification
-
-    Returns:
-        Dictionary with reconstruction results
-
-    Raises:
-        Exception: If reconstruction fails after all retries
     """
     logger.info("=" * 80)
     logger.info("Processing reconstruction task for model_id=%s", model_id)
@@ -61,13 +48,13 @@ def process_reconstruction(
 
     # Initialize settings and services
     settings = get_settings()
-    
+
     storage = MinioStorage(
         config=settings.aws,
         access_key=settings.secrets.aws_access_key_id,
         secret_key=settings.secrets.aws_secret_access_key,
     )
-    
+
     reconstruction_service = ReconstructionService(
         provider_type="meshroom",
         config=settings.meshroom,
@@ -83,7 +70,8 @@ def process_reconstruction(
             )
         )
 
-        logger.info("Reconstruction completed successfully for model_id=%s", model_id)
+        logger.info(
+            "Reconstruction completed successfully for model_id=%s", model_id)
 
         # Send success webhook if provided
         if callback_url:
@@ -149,11 +137,11 @@ async def send_webhook(url: str, payload: dict[str, Any]) -> None:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
-            logger.info("Webhook sent successfully to %s: %s", url, response.status_code)
+            logger.info("Webhook sent successfully to %s: %s",
+                        url, response.status_code)
     except Exception as exc:
         logger.error("Failed to send webhook to %s: %s", url, exc)
         raise
 
 
 __all__ = ["process_reconstruction"]
-

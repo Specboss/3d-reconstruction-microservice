@@ -10,7 +10,7 @@ class BaseReconstructProvider(ABC):
         input_dir: str | None = None,
         output_dir: str | None = None,
         cache_dir: str | None = None,
-        logger: Logger | None = None
+        logger: Logger | None = None,
     ):
         self.input_dir = input_dir
         self.output_dir = output_dir

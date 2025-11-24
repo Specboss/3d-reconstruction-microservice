@@ -6,7 +6,7 @@ from app.core.logger import Logger
 
 class MeshroomReconstructProvider(BaseReconstructProvider):
     provider_code = 'meshroom'
-
+    
     def __init__(
         self,
         input_dir: str | None = None,
@@ -16,6 +16,6 @@ class MeshroomReconstructProvider(BaseReconstructProvider):
     ):
         super().__init__(input_dir, output_dir, cache_dir, logger)
 
-    async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]::
+    async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]: :
         """Process the reconstruction."""
         pass

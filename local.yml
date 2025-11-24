@@ -78,7 +78,7 @@ services:
     networks:
       - meshroom
     deploy:
-      replicas: 2
+      replicas: 1
 
   flower:
     build:
