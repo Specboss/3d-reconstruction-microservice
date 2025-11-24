@@ -73,7 +73,7 @@ services:
       - .env
     volumes:
       - .:/service
-      - 3d-reconstruction-workspace:/var/lib/3d-reconstruction
+      - meshroom-workspace:/var/lib/meshroom
     command: python -m app.worker
     networks:
       - 3d-reconstruction
@@ -102,7 +102,7 @@ services:
 volumes:
   redis-data:
   minio-data:
-  3d-reconstruction-workspace:
+  meshroom-workspace:
 
 networks:
   3d-reconstruction:
