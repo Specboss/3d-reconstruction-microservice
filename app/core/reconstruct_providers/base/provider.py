@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Any
 
 from app.core.logger import Logger, get_logger
+from pydantic import BaseModel
 
 
 class BaseReconstructProvider(ABC):
@@ -11,11 +12,13 @@ class BaseReconstructProvider(ABC):
         output_dir: str | None = None,
         cache_dir: str | None = None,
         logger: Logger | None = None,
+        config: BaseModel | None = None,
     ):
         self.input_dir = input_dir
         self.output_dir = output_dir
         self.cache_dir = cache_dir
         self.logger = logger or get_logger(self.__class__.__name__)
+        self.config = config
 
     @abstractmethod
     async def process(self, *args: Any, **kwargs: Any) -> Any:

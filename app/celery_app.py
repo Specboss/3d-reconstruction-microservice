@@ -12,7 +12,7 @@ logger = get_logger(__name__)
 
 # Create Celery app
 celery_app = Celery(
-    "meshroom_reconstruction",
+    "3d_reconstruction",
     broker=settings.broker.celery_broker_url,
     backend=settings.broker.celery_result_backend,
     include=["app.tasks"],

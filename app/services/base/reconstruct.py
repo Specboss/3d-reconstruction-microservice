@@ -10,5 +10,5 @@ class BaseReconstructService(ABC):
         self.reconstruct_provider = reconstruct_provider
 
     @abstractmethod
-    async def process_job(self, job_id: str, image_urls: list[str]) -> tuple[str, str | None]:
+    async def process(self, job_id: str, image_urls: list[str]) -> tuple[str, str | None]:
         pass

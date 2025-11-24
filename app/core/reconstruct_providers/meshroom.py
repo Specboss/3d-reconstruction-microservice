@@ -1,7 +1,8 @@
 from app.core.reconstruct_providers.base.provider import BaseReconstructProvider
-from typing import TypedDict, Any
+from typing import Any
 
 from app.core.logger import Logger
+from app.core.settings import MeshroomConfigModel
 
 
 class MeshroomReconstructProvider(BaseReconstructProvider):
@@ -12,10 +13,11 @@ class MeshroomReconstructProvider(BaseReconstructProvider):
         input_dir: str | None = None,
         output_dir: str | None = None,
         cache_dir: str | None = None,
-        logger: Logger | None = None
+        logger: Logger | None = None,
+        config: MeshroomConfigModel | None = None,
     ):
-        super().__init__(input_dir, output_dir, cache_dir, logger)
+        super().__init__(input_dir, output_dir, cache_dir, logger, config)
 
-    async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]: :
+    async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Process the reconstruction."""
-        pass
+        return {}
