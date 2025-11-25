@@ -20,4 +20,13 @@ class MeshroomReconstructProvider(BaseReconstructProvider):
 
     async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
         """Process the reconstruction."""
+#         command = [
+#     self.config.binary,
+#     "-i", f"SFM/FOLDERS/IMAGES;{images_dir}",
+#     "-p", self.config.pipeline_path,  # "photogrammetry" или путь к .mg
+#     "-o", str(output_dir),
+#     "--cache", str(cache_dir),
+#     "--compute", "yes",
+#     "-v", "info",
+# ]
         return {}
