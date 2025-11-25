@@ -1,6 +1,4 @@
 from fastapi import APIRouter, Depends
-
-from app.api.dependencies import verify_api_key
 from app.api.models import ReconstructRequest, ReconstructResponse
 from app.core.logger import get_logger
 from app.tasks import process_reconstruction
@@ -12,7 +10,6 @@ router = APIRouter(prefix="/reconstruct", tags=["reconstruction"])
 @router.post(
     "",
     response_model=ReconstructResponse,
-    dependencies=[Depends(verify_api_key)],
     summary="Create 3D reconstruction job",
     description="Submit ZIP archive with images for 3D reconstruction. Job will be queued and processed asynchronously.",
 )

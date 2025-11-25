@@ -1,6 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
+from fastapi.middleware import Middleware
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.api.middleware.api_key import api_key_middleware
 
 from app.api.models import HealthResponse
 from app.api.v1.routers import reconstruct
@@ -27,6 +31,17 @@ async def lifespan(app: FastAPI):
 
 
 # Create FastAPI application
+middleware = [
+    Middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    ),
+    Middleware(api_key_middleware),
+]
+
 app = FastAPI(
     title="Meshroom Processing Microservice",
     description="3D reconstruction service using Meshroom photogrammetry",
@@ -34,6 +49,7 @@ app = FastAPI(
     docs_url="/docs",
     redoc_url="/redoc",
     lifespan=lifespan,
+    middleware=middleware,
 )
 
 # Include routers
