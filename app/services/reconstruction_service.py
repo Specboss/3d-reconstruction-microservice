@@ -9,7 +9,7 @@ from app.core.reconstruction.base import BaseReconstructProvider
 from app.core.reconstruction.meshroom import MeshroomReconstructProvider
 from app.core.reconstruction.nerfstudio import NerfstudioReconstructProvider
 from app.core.settings import MeshroomConfigModel
-from app.core.storage.base.storage import BaseStorage
+from app.core.storage.storage import BaseStorage
 
 logger = get_logger(__name__)
 
@@ -25,7 +25,7 @@ PROVIDERS: dict[str, type[BaseReconstructProvider]] = {
 class ReconstructionService:
     """
     Service for 3D reconstruction using pluggable providers.
-    
+
     This service acts as an orchestrator that:
     - Creates the appropriate provider based on type
     - Manages the reconstruction workflow
@@ -95,13 +95,13 @@ class ReconstructionService:
             RuntimeError: If reconstruction fails
             ValueError: If provider type is invalid
         """
+
         self.logger.info(
             f"Starting reconstruction for model_id={model_id} "
             f"using provider={self.provider_type}",
         )
 
         try:
-            # Call provider's process method
             result = await self.provider.process(
                 model_id=model_id,
                 images_zip_url=images_zip_url,
@@ -121,7 +121,3 @@ class ReconstructionService:
                 exc_info=True,
             )
             raise
-
-
-__all__ = ["ReconstructionService", "ProviderType"]
-

@@ -1,5 +1,3 @@
-"""Meshroom Processing Microservice - REST API Gateway."""
-
 from contextlib import asynccontextmanager
 
 from fastapi import Depends, FastAPI
@@ -9,7 +7,6 @@ from app.api.v1.routers import reconstruct
 from app.core.logger import configure_logging, get_logger
 from app.core.settings import AppSettings, get_settings
 
-# Initialize settings and logging
 app_settings = get_settings()
 configure_logging(app_settings.logging)
 logger = get_logger(__name__)
@@ -22,9 +19,9 @@ async def lifespan(app: FastAPI):
     logger.info(f"Meshroom binary: {app_settings.meshroom.binary}")
     logger.info(f"Pipeline: {app_settings.meshroom.pipeline_path}")
     logger.info(f"Celery broker: {app_settings.broker.host}:{app_settings.broker.port}")
-    
+
     yield
-    
+
     # Cleanup
     logger.info("Shutting down Meshroom Processing Microservice")
 
@@ -45,7 +42,7 @@ app.include_router(reconstruct.router, prefix="/api/v1")
 
 @app.get("/health", response_model=HealthResponse, tags=["health"])
 async def health_check(
-    settings: AppSettings = Depends(get_settings),
+        settings: AppSettings = Depends(get_settings),
 ) -> HealthResponse:
     """Health check endpoint."""
     return HealthResponse(
@@ -66,4 +63,3 @@ async def root():
 
 
 __all__ = ["app"]
-

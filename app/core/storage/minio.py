@@ -7,7 +7,7 @@ from aiobotocore.session import get_session
 
 from app.core.logger import get_logger
 from app.core.settings import AwsConfigModel
-from app.core.storage.base.storage import BaseStorage
+from app.core.storage.storage import BaseStorage
 
 
 class MinioStorage(BaseStorage):

@@ -18,7 +18,7 @@ class MeshroomReconstructProvider(BaseReconstructProvider):
     ):
         super().__init__(input_dir, output_dir, cache_dir, logger, config)
 
-    async def process(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+    async def process(self, *args: Any, **kwargs: Any) -> str:
         """Process the reconstruction."""
 #         command = [
 #     self.config.binary,
