@@ -34,7 +34,7 @@ celery_app.conf.update(
     task_reject_on_worker_lost=True,
 )
 
-logger.info("Celery app configured with broker: %s", settings.broker.host)
+logger.info(f"Celery app configured with broker: {settings.broker.host}")
 
 __all__ = ["celery_app"]
 

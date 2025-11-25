@@ -41,9 +41,9 @@ def process_reconstruction(
     Process 3D reconstruction job.
     """
     logger.info("=" * 80)
-    logger.info("Processing reconstruction task for model_id=%s", model_id)
-    logger.info("Task ID: %s", self.request.id)
-    logger.info("Retry: %s/%s", self.request.retries, self.max_retries)
+    logger.info(f"Processing reconstruction task for model_id={model_id}")
+    logger.info(f"Task ID: {self.request.id}")
+    logger.info(f"Retry: {self.request.retries}/{self.max_retries}")
     logger.info("=" * 80)
 
     # Initialize settings and services
@@ -70,8 +70,7 @@ def process_reconstruction(
             )
         )
 
-        logger.info(
-            "Reconstruction completed successfully for model_id=%s", model_id)
+        logger.info(f"Reconstruction completed successfully for model_id={model_id}")
 
         # Send success webhook if provided
         if callback_url:
@@ -92,9 +91,7 @@ def process_reconstruction(
 
     except Exception as exc:
         logger.error(
-            "Reconstruction failed for model_id=%s: %s",
-            model_id,
-            exc,
+            f"Reconstruction failed for model_id={model_id}: {exc}",
             exc_info=True,
         )
 
@@ -113,8 +110,7 @@ def process_reconstruction(
                 )
             except Exception as webhook_exc:
                 logger.error(
-                    "Failed to send error webhook: %s",
-                    webhook_exc,
+                    f"Failed to send error webhook: {webhook_exc}",
                     exc_info=True,
                 )
 
@@ -137,10 +133,9 @@ async def send_webhook(url: str, payload: dict[str, Any]) -> None:
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.post(url, json=payload)
             response.raise_for_status()
-            logger.info("Webhook sent successfully to %s: %s",
-                        url, response.status_code)
+            logger.info(f"Webhook sent successfully to {url}: {response.status_code}")
     except Exception as exc:
-        logger.error("Failed to send webhook to %s: %s", url, exc)
+        logger.error(f"Failed to send webhook to {url}: {exc}")
         raise
 
 

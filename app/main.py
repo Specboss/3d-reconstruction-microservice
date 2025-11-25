@@ -19,9 +19,9 @@ logger = get_logger(__name__)
 async def lifespan(app: FastAPI):
     """Application lifespan manager."""
     logger.info("Starting Meshroom Processing Microservice")
-    logger.info("Meshroom binary: %s", app_settings.meshroom.binary)
-    logger.info("Pipeline: %s", app_settings.meshroom.pipeline_path)
-    logger.info("Celery broker: %s:%s", app_settings.broker.host, app_settings.broker.port)
+    logger.info(f"Meshroom binary: {app_settings.meshroom.binary}")
+    logger.info(f"Pipeline: {app_settings.meshroom.pipeline_path}")
+    logger.info(f"Celery broker: {app_settings.broker.host}:{app_settings.broker.port}")
     
     yield
     

@@ -14,10 +14,10 @@ logger = get_logger(__name__)
 logger.info("=" * 80)
 logger.info("Starting Celery Worker for 3D Reconstruction")
 logger.info("=" * 80)
-logger.info("Meshroom binary: %s", settings.meshroom.binary)
-logger.info("Workspace: %s", settings.meshroom.workspace_dir)
-logger.info("Broker: %s", settings.broker.celery_broker_url)
-logger.info("Result backend: %s", settings.broker.celery_result_backend)
+logger.info(f"Meshroom binary: {settings.meshroom.binary}")
+logger.info(f"Workspace: {settings.meshroom.workspace_dir}")
+logger.info(f"Broker: {settings.broker.celery_broker_url}")
+logger.info(f"Result backend: {settings.broker.celery_result_backend}")
 logger.info("=" * 80)
 
 if __name__ == "__main__":
@@ -34,5 +34,5 @@ if __name__ == "__main__":
         logger.info("Worker stopped by user")
         sys.exit(0)
     except Exception as exc:
-        logger.error("Worker error: %s", exc, exc_info=True)
+        logger.error(f"Worker error: {exc}", exc_info=True)
         sys.exit(1)

@@ -66,8 +66,7 @@ class ReconstructionService:
         )
 
         self.logger.info(
-            "Initialized ReconstructionService with provider: %s",
-            provider_type,
+            f"Initialized ReconstructionService with provider: {provider_type}",
         )
 
     async def process_reconstruction(
@@ -97,9 +96,8 @@ class ReconstructionService:
             ValueError: If provider type is invalid
         """
         self.logger.info(
-            "Starting reconstruction for model_id=%s using provider=%s",
-            model_id,
-            self.provider_type,
+            f"Starting reconstruction for model_id={model_id} "
+            f"using provider={self.provider_type}",
         )
 
         try:
@@ -112,17 +110,14 @@ class ReconstructionService:
             )
 
             self.logger.info(
-                "Reconstruction completed successfully for model_id=%s",
-                model_id,
+                f"Reconstruction completed successfully for model_id={model_id}",
             )
 
             return result
 
         except Exception as exc:
             self.logger.error(
-                "Reconstruction failed for model_id=%s: %s",
-                model_id,
-                exc,
+                f"Reconstruction failed for model_id={model_id}: {exc}",
                 exc_info=True,
             )
             raise

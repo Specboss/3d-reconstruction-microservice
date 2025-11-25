@@ -35,9 +35,7 @@ async def create_reconstruction_job(
     )
 
     logger.info(
-        "Queued reconstruction job for model_id=%s (task_id=%s)",
-        request.model_id,
-        task.id,
+        f"Queued reconstruction job for model_id={request.model_id} (task_id={task.id})",
     )
 
     return ReconstructResponse(
