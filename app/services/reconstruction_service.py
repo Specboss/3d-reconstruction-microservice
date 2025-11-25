@@ -9,7 +9,7 @@ from app.core.reconstruction.base import BaseReconstructProvider
 from app.core.reconstruction.meshroom import MeshroomReconstructProvider
 from app.core.reconstruction.nerfstudio import NerfstudioReconstructProvider
 from app.core.settings import MeshroomConfigModel
-from app.core.storage.storage import BaseStorage
+from app.core.storage.base import BaseStorage
 
 logger = get_logger(__name__)
 
